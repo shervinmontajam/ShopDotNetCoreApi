@@ -3,17 +3,24 @@ using Shop.Repository.RepositoryContract;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 using MongoDB.Bson;
+using Shop.Model.Metadata;
+using Shop.Repository.ApplicationDbContext;
 
 namespace Shop.Repository.RepositoryImplementation
 {
     public abstract class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        protected abstract IMongoCollection<TEntity> Collection { get; }
+        protected IMongoCollection<TEntity> Collection { get; }
 
-        internal Repository()
+        protected readonly ShopContext ShopContext;
+
+        internal Repository(ShopContext shopContext)
         {
+            ShopContext = shopContext;
+            Collection = ShopContext.MongoDatabase.GetCollection<TEntity>(typeof(TEntity).GetCustomAttribute<MongoCollectionAttribute>().CollectionName);
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync() => await Collection.Find(filter => true).ToListAsync();
